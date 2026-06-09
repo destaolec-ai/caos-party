@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Caos Party V13 Conexão Fix</title>
+<title>Caos Party V14 Correção Real</title>
 <script src="/socket.io/socket.io.js"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -39,7 +39,7 @@ input{text-align:center;text-transform:uppercase;letter-spacing:3px}.blue{backgr
 </head>
 <body>
 <div id="menu" class="screen active"><div class="card">
- <div class="title">🎮 Caos Party V13</div>
+ <div class="title">🎮 Caos Party V14</div>
  <p><span class="pill">conexão fix</span><span class="pill">sala estável</span><span class="pill">powerups</span><span class="pill">mobile</span></p>
  <div id="conn" class="wait">Conectando ao servidor...</div>
 <div id="connHelp" class="small"></div>
@@ -171,16 +171,68 @@ function fade(){fx.forEach(f=>f.life--);fx=fx.filter(f=>f.life>0);players.forEac
 function finishRound(){clearInterval(loop);clearInterval(timer);let order=[...players].sort((a,b)=>(miniScores[b.id]||0)-(miniScores[a.id]||0));[10,7,4,2].forEach((pt,i)=>{if(order[i])order[i].score+=pt});$("notice").textContent="Fim!";sendSnap(true);setTimeout(nextRound,1600)}
 function endGame(){clearInterval(snapTimer);socket.emit("gameResult",players.map(p=>({id:p.id,name:p.name,emoji:p.emoji,color:p.color,score:p.score})));showResult(players)}
 function sendSnap(force=false){
-if(!isHost)return;
-let now=performance.now();
-if(!force&&now-lastSend<(MOBILE&&perf?190:110))return;
-lastSend=now;seq++;
-socket.emit("gameState",{seq,round,maxRounds,game,timeLeft,players:players.map(p=>({id:p.id,name:p.name,emoji:p.emoji,color:p.color,charId:p.charId,score:p.score,x:Math.round(p.x),y:Math.round(p.y),alive:p.alive,weapon:p.weapon,shield:p.shield,lastHit:p.lastHit})),objects:objects.map(o=>({type:o.type,x:Math.round(o.x),y:Math.round(o.y),w:o.w,h:o.h,txt:o.txt,kind:o.kind,owner:o.owner,vx:o.vx,vy:o.vy,life:o.life,armed:o.armed})),fx:perf?[]:fx,miniScores,notice:$("notice").textContent,inst:$("instructions").textContent});
-})}
+  if(!isHost)return;
+  let now=performance.now();
+  if(!force&&now-lastSend<(MOBILE&&perf?190:110))return;
+  lastSend=now;
+  seq++;
+  const state={
+    seq,
+    round,
+    maxRounds,
+    game,
+    timeLeft,
+    players:players.map(p=>({
+      id:p.id,
+      name:p.name,
+      emoji:p.emoji,
+      color:p.color,
+      charId:p.charId,
+      score:p.score,
+      x:Math.round(p.x),
+      y:Math.round(p.y),
+      alive:p.alive,
+      weapon:p.weapon,
+      shield:p.shield,
+      lastHit:p.lastHit
+    })),
+    objects:objects.map(o=>({
+      type:o.type,
+      x:Math.round(o.x),
+      y:Math.round(o.y),
+      w:o.w,
+      h:o.h,
+      txt:o.txt,
+      kind:o.kind,
+      owner:o.owner,
+      vx:o.vx,
+      vy:o.vy,
+      life:o.life,
+      armed:o.armed
+    })),
+    fx:perf?[]:fx,
+    miniScores,
+    notice:$("notice").textContent,
+    inst:$("instructions").textContent
+  };
+  socket.emit("gameState",state);
+}
 function applySnap(s){
-if(s.seq&&s.seq<lastSeq)return;lastSeq=s.seq||lastSeq;
-round=s.round;maxRounds=s.maxRounds;game=s.game;timeLeft=s.timeLeft;players=s.players;objects=s.objects;fx=s.fx||[];miniScores=s.miniScores;
-$("roundTitle").textContent=`Rodada ${round}/${maxRounds}`;$("miniTitle").textContent=game.title;$("notice").textContent=s.notice||"";render(true)}/${maxRounds}`;$("miniTitle").textContent=game.title;$("notice").textContent=s.notice||"";render(true)}
+  if(s.seq&&s.seq<lastSeq)return;
+  lastSeq=s.seq||lastSeq;
+  round=s.round;
+  maxRounds=s.maxRounds;
+  game=s.game;
+  timeLeft=s.timeLeft;
+  players=s.players||[];
+  objects=s.objects||[];
+  fx=s.fx||[];
+  miniScores=s.miniScores||{};
+  $("roundTitle").textContent=`Rodada ${round}/${maxRounds}`;
+  $("miniTitle").textContent=game.title||"";
+  $("notice").textContent=s.notice||"";
+  render(true);
+}
 function render(force=false){let now=performance.now();if(perf&&MOBILE&&!force&&now-lastRender<100)return;lastRender=now;let ga=$("gameArea");ga.innerHTML="";objects.forEach(o=>draw(o.type,o));players.forEach(p=>drawP(p));if(!perf)fx.forEach(o=>draw(o.type,o));renderHud()}
 function draw(cls,o){let e=document.createElement("div");e.className="obj "+cls;e.textContent=o.txt||"";e.style.left=o.x/W*100+"%";e.style.top=o.y/H*100+"%";e.style.width=o.w/W*100+"%";e.style.height=o.h/H*100+"%";$("gameArea").appendChild(e)}
 function drawP(p){let e=document.createElement("div");e.className="player "+(Date.now()-p.lastHit<180?"hit":"");e.style.background=p.color;e.innerHTML=`<span class=tag>${p.name}</span>${p.emoji}${p.weapon?`<span style="position:absolute;bottom:-19px;font-size:14px">${p.weapon==="sword"?"⚔️":p.weapon==="hammer"?"🔨":"🔫"}</span>`:""}${p.shield?`<span style="position:absolute;right:-8px;top:-8px">🛡️</span>`:""}`;e.style.left=p.x/W*100+"%";e.style.top=p.y/H*100+"%";$("gameArea").appendChild(e)}
