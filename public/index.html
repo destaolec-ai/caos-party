@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Caos Party Socket</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at top,#263b7a,#0b1020 55%,#050713);color:white;text-align:center;overflow-x:hidden}
+.screen{display:none;min-height:100vh;padding:14px}.active{display:block}
+.card{max-width:920px;margin:14px auto;padding:18px;border-radius:24px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.title{font-size:40px;font-weight:1000;text-shadow:0 5px 0 rgba(0,0,0,.35)}
+button,input,select{border:0;border-radius:15px;padding:12px 16px;margin:6px;font-weight:900;font-size:15px}
+button{background:#ffd43b;color:#181818;box-shadow:0 5px 0 #9f7a00}button:active{transform:translateY(4px);box-shadow:0 1px 0 #9f7a00}
+input{background:white;color:#111;text-align:center;text-transform:uppercase;letter-spacing:1px}
+.ghost{background:rgba(255,255,255,.18);color:white;box-shadow:0 4px 0 rgba(0,0,0,.3)}.blue{background:#38bdf8;box-shadow:0 5px 0 #075985}.green{background:#4ade80;box-shadow:0 5px 0 #166534}
+.small{font-size:13px;opacity:.85}.pill{display:inline-block;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.14);font-size:13px;font-weight:900;margin:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.mode{padding:14px;border-radius:18px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.14)}
+#roomCode{font-size:42px;color:#ffd43b;letter-spacing:4px}
+.lobbyGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px auto;max-width:760px}.slot{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:12px;text-align:left}.slot .avatar{font-size:34px;margin-right:8px}.ok{color:#4ade80;font-weight:900}.wait{color:#ffd43b;font-weight:900}.bad{color:#fb7185;font-weight:900}
+#top{max-width:980px;margin:0 auto}#roundTitle{opacity:.9}#miniTitle{font-size:30px;font-weight:1000;text-shadow:0 4px 0 rgba(0,0,0,.35)}#notice{min-height:30px;color:#ffd43b;font-size:22px;font-weight:1000}
+#hud{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px auto;max-width:980px}.hud{background:rgba(255,255,255,.14);border-radius:15px;padding:8px 10px;font-weight:900}.dot{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid white;margin-right:5px;vertical-align:-2px}
+#gameArea{position:relative;width:min(96vw,980px);height:min(56vh,520px);min-height:380px;margin:8px auto;border:4px solid white;border-radius:26px;background:#166534;overflow:hidden;box-shadow:0 20px 45px rgba(0,0,0,.42);touch-action:none}
+#gameArea:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+.player,.obj{position:absolute;display:flex;align-items:center;justify-content:center;user-select:none}.player{width:44px;height:44px;border-radius:50%;border:3px solid white;font-size:24px;z-index:10;box-shadow:0 7px 0 rgba(0,0,0,.3)}.tag{position:absolute;top:-21px;left:50%;transform:translateX(-50%);font-size:11px;background:rgba(0,0,0,.55);border-radius:8px;padding:2px 6px;white-space:nowrap}
+.p1{background:#ff4757}.p2{background:#38bdf8}.p3{background:#22c55e}.p4{background:#a855f7}
+.obj{z-index:4}.star{width:38px;height:38px;border-radius:50%;background:#fde047;color:#111;font-size:22px;box-shadow:0 5px 0 #a16207}.bomb{width:42px;height:42px;border-radius:50%;background:#111;border:2px solid white;font-size:23px}.ball{width:76px;height:76px;border-radius:50%;background:#fb923c;border:4px solid white;font-size:34px}.flag{width:46px;height:46px;border-radius:14px;background:white;font-size:28px}.goal{width:62px;height:62px;border-radius:50%;border:4px dashed white;background:rgba(255,255,255,.1)}.meteor{width:48px;height:48px;border-radius:50%;background:#ef4444;border:3px solid white;font-size:24px}.tile{border-radius:14px;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.38);font-size:28px}.hammer{width:58px;height:58px;border-radius:50%;border:4px solid white;background:#facc15;font-size:30px}.hoop{width:70px;height:70px;border-radius:50%;border:5px solid white;background:rgba(34,211,238,.18);font-size:28px}.bullet{width:18px;height:18px;border-radius:50%;background:#fde047;border:2px solid white;box-shadow:0 0 12px #fde047}.wall{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.45);border-radius:12px}.mine{width:44px;height:44px;border-radius:50%;background:#111;border:3px solid #f43f5e;font-size:24px}.zone{border-radius:18px;border:4px dashed #fff;background:rgba(250,204,21,.14);font-size:24px}.sword{width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.2);border:3px solid #fff;font-size:30px}.finish{width:18px;height:100%;background:repeating-linear-gradient(45deg,#fff,#fff 10px,#111 10px,#111 20px)}
+#padWrap{max-width:420px;margin:8px auto}.pad{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:8px}.dpad{display:grid;grid-template-columns:72px 72px 72px;grid-template-rows:58px 58px 58px;gap:5px;justify-content:center}.dpad button{padding:0;margin:0;font-size:26px}.up{grid-column:2;grid-row:1}.left{grid-column:1;grid-row:2}.act{grid-column:2;grid-row:2;background:white;box-shadow:0 4px 0 #aaa}.right{grid-column:3;grid-row:2}.down{grid-column:2;grid-row:3}
+.ranking{max-width:520px;margin:14px auto;text-align:left;font-size:19px;line-height:1.8}.barWrap{height:16px;background:rgba(255,255,255,.15);border-radius:10px;overflow:hidden}.bar{height:100%;border-radius:10px}
+@media(max-width:840px){.title{font-size:34px}#gameArea{height:380px;min-height:380px}.dpad{grid-template-columns:66px 66px 66px;grid-template-rows:54px 54px 54px}.hud{font-size:12px;padding:7px 8px}}
+</style>
+</head>
+<body>
+<div id="menu" class="screen active">
+  <div class="card">
+    <div class="title">🎮 Caos Party Socket</div>
+    <p><span class="pill">servidor real</span><span class="pill">Socket.io</span><span class="pill">PvP</span></p>
+    <div class="grid">
+      <div class="mode"><b>🌐 Criar sala</b><p class="small">Host cria a sala e também joga.</p><select id="hostR"><option>5</option><option selected>7</option><option>10</option></select><br><button class="blue" onclick="createRoom()">Criar sala</button></div>
+      <div class="mode"><b>📱 Entrar</b><p class="small">Abre o mesmo link e coloca o código.</p><input id="joinCode" placeholder="CÓDIGO"><br><button class="green" onclick="joinRoom()">Entrar</button></div>
+    </div>
+    <p class="small">Essa versão precisa ser hospedada como app Node.js. Não funciona só no Netlify Drop simples.</p>
+  </div>
+</div>
+
+<div id="lobby" class="screen">
+ <div class="card">
+  <div class="title">🌐 Lobby</div>
+  <p>Código:</p><div id="roomCode">...</div>
+  <button class="ghost" onclick="copyCode()">Copiar código</button>
+  <p id="status"><span class="wait">Conectando...</span></p>
+  <div id="lobbyPlayers" class="lobbyGrid"></div>
+  <button id="startBtn" onclick="startGame()">Começar partida</button>
+  <button class="ghost" onclick="location.reload()">Voltar</button>
+ </div>
+</div>
+
+<div id="game" class="screen">
+ <div id="top"><div id="roundTitle"></div><div id="miniTitle"></div><div id="notice"></div><div id="hud"></div></div>
+ <div id="gameArea"></div>
+ <div id="padWrap"><div class="pad"><b id="padLabel">Controle</b><div class="dpad">
+  <button class="up" data-k="up">⬆️</button><button class="left" data-k="left">⬅️</button><button class="act" data-k="action">●</button><button class="right" data-k="right">➡️</button><button class="down" data-k="down">⬇️</button>
+ </div></div></div>
+ <p id="instructions" class="small"></p>
+</div>
+
+<div id="result" class="screen"><div class="card"><div class="title">🏆 Resultado</div><h2 id="winner"></h2><div id="ranking" class="ranking"></div><button onclick="location.reload()">Menu</button></div></div>
+
+<script>
+const socket = io();
+
+const $=id=>document.getElementById(id),W=980,H=520;
+const screens={menu:$("menu"),lobby:$("lobby"),game:$("game"),result:$("result")};
+let isHost=false,myId=0,roomCode="",round=0,maxRounds=7,players=[],objects=[],tiles=[],keys={},remote={},loop=null,timer=null,snapTimer=null,timeLeft=0,miniScores={},game={},lastMini="";
+const BASE=[null,{id:1,name:"Host",emoji:"🦊",cls:"p1",color:"#ff4757"},{id:2,name:"P2",emoji:"🐧",cls:"p2",color:"#38bdf8"},{id:3,name:"P3",emoji:"🐸",cls:"p3",color:"#22c55e"},{id:4,name:"P4",emoji:"🐰",cls:"p4",color:"#a855f7"}];
+const MINIS=[["shooter","🔫 Duelo de Bolinhas"],["bombtag","💣 Bomba Tag"],["king","👑 Rei da Área"],["minefield","💥 Campo Minado PvP"],["sword","⚔️ Espadinha Maluca"],["flag","🚩 Bandeira com Marreta"],["dodge","🏀 Bola do Caos"],["fall","🧊 Chão Sumindo"],["race","🏁 Corrida Alternada"]];
+function show(n){Object.values(screens).forEach(s=>s.classList.remove("active"));screens[n].classList.add("active")}
+function copyCode(){try{navigator.clipboard.writeText(roomCode)}catch(e){}}
+function createRoom(){isHost=true;maxRounds=parseInt($("hostR").value);socket.emit("createRoom",(res)=>{if(!res.ok)return alert(res.error);roomCode=res.code;myId=res.playerId;players=res.players.map(toGamePlayer);$("roomCode").textContent=roomCode;$("status").innerHTML='<span class=ok>Sala aberta</span>';show("lobby");renderLobby();setupPad();$("startBtn").style.display="inline-block";})}
+function joinRoom(){const code=$("joinCode").value.trim().toUpperCase();if(!code)return alert("Digite o código");isHost=false;socket.emit("joinRoom",code,(res)=>{if(!res.ok)return alert(res.error);roomCode=res.code;myId=res.playerId;players=res.players.map(toGamePlayer);$("roomCode").textContent=roomCode;$("status").innerHTML='<span class=ok>Conectado</span> aguardando host';show("lobby");renderLobby();setupPad();$("startBtn").style.display="none";})}
+function toGamePlayer(p){return {...(BASE[p.id]||BASE[1]),...p,x:0,y:0,vx:0,vy:0,alive:true,stun:0,slow:0,score:p.score||0}}
+function renderLobby(){let h="";for(let i=1;i<=4;i++){const p=players.find(x=>x.id===i);h+=p?`<div class=slot><span class=avatar>${p.emoji}</span><b>${p.name}</b><br><span class=ok>Pronto</span></div>`:`<div class=slot><span class=avatar>➕</span><b>Vaga ${i}</b><br><span class=wait>Livre</span></div>`}$("lobbyPlayers").innerHTML=h}
+socket.on("lobby",(data)=>{players=data.players.map(toGamePlayer);renderLobby()});
+socket.on("startGame",(data)=>{players=data.players.map(toGamePlayer);show("game");if(!isHost){$("notice").textContent="Aguardando host...";$("instructions").textContent="Partida iniciada."}});
+socket.on("playerInput",(data)=>{if(isHost)remote[data.playerId]=data.input});
+socket.on("gameState",(state)=>{if(!isHost)applySnap(state)});
+socket.on("gameResult",(ps)=>showResult(ps.map(toGamePlayer)));
+socket.on("hostLeft",()=>{alert("Host saiu da sala");location.reload()});
+function startGame(){if(players.length<2)return alert("Precisa de pelo menos 2 jogadores");socket.emit("startGame");round=0;show("game");nextRound();snapTimer=setInterval(()=>sendSnap(),100)}
+function setupPad(){const state={up:false,down:false,left:false,right:false,action:false};$("padLabel").textContent=`Você: ${(BASE[myId]||BASE[1]).emoji} ${myId===1?"Host":"P"+myId}`;document.querySelectorAll("#padWrap button").forEach(b=>{const k=b.dataset.k;const send=v=>{state[k]=v;keys={...state};socket.emit("input",state)};b.ontouchstart=e=>{e.preventDefault();send(true)};b.ontouchend=e=>{e.preventDefault();send(false)};b.ontouchcancel=e=>{e.preventDefault();send(false)};b.onmousedown=()=>send(true);b.onmouseup=()=>send(false);b.onmouseleave=()=>send(false)})}
+function getInput(p){if(p.id===myId)return keys;return remote[p.id]||{}}
+function nextRound(){clearInterval(loop);clearInterval(timer);objects=[];tiles=[];miniScores={};players.forEach(p=>{p.alive=true;p.vx=0;p.vy=0;p.stun=0;p.carrying=false;p.done=false;miniScores[p.id]=0});round++;if(round>maxRounds){endGame();return}let m;do{m=MINIS[Math.floor(Math.random()*MINIS.length)]}while(m[0]===lastMini&&MINIS.length>1);lastMini=m[0];game={mini:m[0],title:m[1],bg:"#166534"};$("roundTitle").textContent=`Rodada ${round}/${maxRounds}`;$("miniTitle").textContent=m[1];countdown(()=>initMini(m[0]))}
+function countdown(cb){let c=3;$("notice").textContent=c;const cd=setInterval(()=>{c--;if(c>0)$("notice").textContent=c;else if(c===0)$("notice").textContent="VAI!";else{clearInterval(cd);$("notice").textContent="";cb()}renderAll();sendSnap()},600)}
+function initMini(id){({shooter:initShooter,bombtag:initBombTag,king:initKing,minefield:initMinefield,sword:initSword,flag:initFlag,dodge:initDodge,fall:initFall,race:initRace}[id])();loop=setInterval(tick,33);timer=setInterval(()=>{timeLeft--;if(["dodge","fall","bombtag","king"].includes(game.mini))players.forEach(p=>{if(p.alive)miniScores[p.id]++});if(timeLeft<=0)finishScores();renderHud()},1000)}
+function corners(){const a=[[45,45],[W-95,45],[45,H-95],[W-95,H-95]];players.forEach((p,i)=>{p.x=a[i][0];p.y=a[i][1]})}
+function center(){players.forEach((p,i)=>{p.x=W/2-75+(i%2)*110;p.y=H/2-75+Math.floor(i/2)*110})}
+function initShooter(){game.bg="linear-gradient(160deg,#1e293b,#020617)";$("instructions").textContent="Aperte ● para atirar.";timeLeft=28;corners();objects=[{type:"wall",x:W/2-45,y:H/2-120,w:90,h:70},{type:"wall",x:W/2-45,y:H/2+55,w:90,h:70}];players.forEach(p=>p.cool=0)}
+function initBombTag(){game.bg="linear-gradient(160deg,#7f1d1d,#1c1917)";$("instructions").textContent="Passe a bomba encostando nos outros.";timeLeft=30;corners();players.forEach(p=>{p.bomb=false;p.inv=0});players[Math.floor(Math.random()*players.length)].bomb=true}
+function initKing(){game.bg="linear-gradient(160deg,#854d0e,#1c1917)";$("instructions").textContent="Fique na área para pontuar.";timeLeft=28;corners();objects=[{type:"zone",x:W/2-95,y:H/2-75,w:190,h:150,txt:"👑"}];players.forEach(p=>p.cool=0)}
+function initMinefield(){game.bg="linear-gradient(160deg,#3f3f46,#111827)";$("instructions").textContent="● coloca mina.";timeLeft=28;corners();objects=[];players.forEach(p=>p.cool=0)}
+function initSword(){game.bg="linear-gradient(160deg,#581c87,#111827)";$("instructions").textContent="● bate com espada.";timeLeft=26;corners();objects=[];players.forEach(p=>p.cool=0)}
+function initFlag(){game.bg="linear-gradient(160deg,#047857,#022c22)";$("instructions").textContent="Pegue a bandeira. ● usa marreta.";timeLeft=32;corners();const b=[[26,26],[W-88,26],[26,H-88],[W-88,H-88]];objects=[];players.forEach((p,i)=>{p.base={x:b[i][0],y:b[i][1]};p.cool=0;objects.push({type:"goal",x:p.base.x,y:p.base.y,w:62,h:62,color:p.color})});game.flag={x:W/2-23,y:H/2-23,holder:null};objects.push({type:"flag",id:"flag",x:game.flag.x,y:game.flag.y,w:46,h:46,txt:"🚩"})}
+function initDodge(){game.bg="linear-gradient(160deg,#0f172a,#020617)";$("instructions").textContent="Desvie da bola.";timeLeft=21;corners();objects=[{type:"ball",x:W/2-38,y:H/2-38,w:76,h:76,vx:5,vy:4,txt:"🏀"}]}
+function initFall(){game.bg="linear-gradient(160deg,#111827,#020617)";$("instructions").textContent="Fique nos blocos.";timeLeft=23;center();const s=64,g=8;for(let r=0;r<5;r++)for(let c=0;c<8;c++)tiles.push({x:35+c*(s+g),y:35+r*(s+g),w:s,h:s,alive:true})}
+function initRace(){game.bg="linear-gradient(160deg,#475569,#111827)";$("instructions").textContent="Alterne esquerda/direita.";timeLeft=18;players.forEach((p,i)=>{p.x=34;p.y=52+i*((H-95)/Math.max(1,players.length-1));p.last=""});objects=[{type:"finish",x:W-36,y:0,w:18,h:H}]}
+function tick(){if(!isHost)return;if(game.mini==="race")moveRace();else movePlayers();({shooter:tickShooter,bombtag:tickBombTag,king:tickKing,minefield:tickMinefield,sword:tickSword,flag:tickFlag,dodge:tickDodge,fall:tickFall,race:()=>{}}[game.mini])();renderAll()}
+function movePlayers(){players.forEach(p=>{if(!p.alive)return;if(p.stun>0){p.stun--;p.x=clamp(p.x+(p.vx||0),0,W-44);p.y=clamp(p.y+(p.vy||0),0,H-44);return}const i=getInput(p);let dx=0,dy=0;if(i.left)dx--;if(i.right)dx++;if(i.up)dy--;if(i.down)dy++;if(dx&&dy){dx*=.707;dy*=.707}if(dx||dy){p.lastDx=dx;p.lastDy=dy}p.x=clamp(p.x+dx*5,0,W-44);p.y=clamp(p.y+dy*5,0,H-44)})}
+function moveRace(){players.forEach(p=>{const i=getInput(p);if(i.left&&p.last!=="L"){p.x+=14;p.last="L"}if(i.right&&p.last!=="R"){p.x+=14;p.last="R"}miniScores[p.id]=Math.floor(p.x);if(p.x>=W-82&&!p.done){p.done=true;p.alive=false}});if(players.every(p=>p.done))finishOrder([...players].sort((a,b)=>b.x-a.x))}
+function tickShooter(){players.forEach(p=>{p.cool=Math.max(0,(p.cool||0)-1);const i=getInput(p);if(i.action&&p.cool<=0){p.cool=18;let dx=p.lastDx||1,dy=p.lastDy||0;const d=Math.hypot(dx,dy)||1;dx/=d;dy/=d;objects.push({type:"bullet",x:p.x+22,y:p.y+22,w:18,h:18,vx:dx*10,vy:dy*10,owner:p.id,life:70})}});for(let oi=objects.length-1;oi>=0;oi--){const b=objects[oi];if(b.type!=="bullet")continue;b.x+=b.vx;b.y+=b.vy;b.life--;if(b.x<0||b.x>W||b.y<0||b.y>H||b.life<=0){objects.splice(oi,1);continue}if(objects.some(o=>o.type==="wall"&&hitBox(b,o))){objects.splice(oi,1);continue}for(const p of players){if(p.id!==b.owner&&hitBox({x:p.x,y:p.y,w:44,h:44},b)){miniScores[b.owner]+=2;miniScores[p.id]-=1;p.stun=10;objects.splice(oi,1);break}}}}
+function tickBombTag(){players.forEach(p=>p.inv=Math.max(0,(p.inv||0)-1));const h=players.find(p=>p.bomb);if(h){objects=objects.filter(o=>o.type!=="bomb");objects.push({type:"bomb",x:h.x+2,y:h.y-30,w:42,h:42,txt:"💣"});players.forEach(p=>{if(p.id!==h.id&&p.inv<=0&&dist(h.x,h.y,p.x,p.y)<48){h.bomb=false;p.bomb=true;p.inv=30;h.inv=30;miniScores[h.id]+=3;miniScores[p.id]-=2}})}}
+function tickKing(){const z=objects.find(o=>o.type==="zone");players.forEach(p=>{if(p.x+22>z.x&&p.x+22<z.x+z.w&&p.y+22>z.y&&p.y+22<z.y+z.h)miniScores[p.id]+=0.08})}
+function tickMinefield(){players.forEach(p=>{p.cool=Math.max(0,(p.cool||0)-1);const i=getInput(p);if(i.action&&p.cool<=0&&objects.filter(o=>o.type==="mine"&&o.owner===p.id).length<3){p.cool=35;objects.push({type:"mine",x:p.x,y:p.y,w:44,h:44,owner:p.id,armed:18,txt:"💣"})}});for(let oi=objects.length-1;oi>=0;oi--){const m=objects[oi];if(m.type!=="mine")continue;m.armed=Math.max(0,m.armed-1);for(const p of players){if(p.id!==m.owner&&m.armed<=0&&hitBox({x:p.x,y:p.y,w:44,h:44},m)){miniScores[m.owner]+=3;miniScores[p.id]-=2;p.stun=20;objects.splice(oi,1);break}}}}
+function tickSword(){players.forEach(p=>{p.cool=Math.max(0,(p.cool||0)-1);const i=getInput(p);if(i.action&&p.cool<=0){p.cool=20;objects.push({type:"sword",x:p.x-5,y:p.y-5,w:54,h:54,owner:p.id,life:7,txt:"⚔️"});players.forEach(o=>{if(o.id!==p.id&&dist(p.x,p.y,o.x,o.y)<64){miniScores[p.id]+=2;miniScores[o.id]-=1;o.stun=12}})}});objects.forEach(o=>{if(o.type==="sword")o.life--});objects=objects.filter(o=>o.type!=="sword"||o.life>0)}
+function tickFlag(){const f=objects.find(o=>o.id==="flag");players.forEach(p=>{p.cool=Math.max(0,p.cool-1);const i=getInput(p);if(i.action&&p.cool<=0){p.cool=35;objects.push({type:"hammer",x:p.x-7,y:p.y-7,w:58,h:58,txt:"🔨",life:8});players.forEach(o=>{if(o.id!==p.id&&dist(p.x,p.y,o.x,o.y)<74){o.stun=20;if(game.flag.holder===o.id){game.flag.holder=null;o.carrying=false;game.flag.x=o.x;game.flag.y=o.y}}})}if(!game.flag.holder&&dist(p.x,p.y,game.flag.x,game.flag.y)<46){game.flag.holder=p.id;p.carrying=true}if(game.flag.holder===p.id){game.flag.x=p.x+2;game.flag.y=p.y-25;if(dist(p.x,p.y,p.base.x,p.base.y)<58){miniScores[p.id]++;game.flag.holder=null;p.carrying=false;game.flag.x=W/2-23;game.flag.y=H/2-23}}});objects.forEach(o=>{if(o.type==="hammer")o.life--});objects=objects.filter(o=>o.type!=="hammer"||o.life>0);if(f){f.x=game.flag.x;f.y=game.flag.y}}
+function tickDodge(){const b=objects[0];b.x+=b.vx;b.y+=b.vy;if(b.x<=0||b.x>=W-b.w)b.vx*=-1.05;if(b.y<=0||b.y>=H-b.h)b.vy*=-1.05;players.forEach(p=>{if(p.alive&&hitBox({x:p.x,y:p.y,w:44,h:44},b)){p.alive=false;miniScores[p.id]-=3}});if(players.filter(p=>p.alive).length<=1)finishScores()}
+function tickFall(){if(Math.random()<.035){const a=tiles.filter(t=>t.alive);if(a.length)a[Math.floor(Math.random()*a.length)].alive=false}players.forEach(p=>{if(!p.alive)return;const cx=p.x+22,cy=p.y+22;if(!tiles.some(t=>t.alive&&cx>=t.x&&cx<=t.x+t.w&&cy>=t.y&&cy<=t.y+t.h)){p.alive=false;miniScores[p.id]-=3}});if(players.filter(p=>p.alive).length<=1)finishScores()}
+function finishScores(){finishOrder([...players].sort((a,b)=>(miniScores[b.id]||0)-(miniScores[a.id]||0)))}
+function finishOrder(order){clearInterval(loop);clearInterval(timer);loop=null;timer=null;[10,7,4,2].forEach((pt,i)=>{if(order[i])order[i].score+=pt});$("notice").textContent="Fim!";renderHud();sendSnap();setTimeout(nextRound,1800)}
+function endGame(){clearAll();const ps=players.map(p=>({id:p.id,name:p.name,emoji:p.emoji,cls:p.cls,color:p.color,score:p.score}));socket.emit("gameResult",ps);showResult(ps)}
+function clearAll(){clearInterval(loop);clearInterval(timer);clearInterval(snapTimer)}
+function sendSnap(){if(isHost)socket.emit("gameState",snap())}
+function snap(){return{round,maxRounds,game,timeLeft,players:players.map(p=>({id:p.id,name:p.name,emoji:p.emoji,cls:p.cls,color:p.color,score:p.score,x:p.x,y:p.y,alive:p.alive})),objects,tiles,miniScores,notice:$("notice").textContent,inst:$("instructions").textContent}}
+function applySnap(s){round=s.round;maxRounds=s.maxRounds;game=s.game;timeLeft=s.timeLeft;players=s.players;objects=s.objects;tiles=s.tiles;miniScores=s.miniScores;$("roundTitle").textContent=`Rodada ${round}/${maxRounds}`;$("miniTitle").textContent=game.title;$("notice").textContent=s.notice||"";$("instructions").textContent=s.inst||"";renderAll()}
+function renderHud(){$("hud").innerHTML=players.map(p=>`<div class=hud><span class=dot style="background:${p.color}"></span>${p.emoji} ${p.name}: ${p.score} <span class=small>(${Math.floor(miniScores[p.id]||0)})</span></div>`).join("")}
+function renderAll(){const ga=$("gameArea");ga.style.background=game.bg||"#166534";ga.innerHTML="";tiles.forEach(t=>draw("tile",t.x,t.y,t.w,t.h,t.alive?"⬜":"🕳️",null,t.alive?1:.15));objects.forEach(o=>draw(o.type,o.x,o.y,o.w,o.h,o.txt,o.color,1));players.forEach(p=>drawPlayer(p));renderHud()}
+function draw(cls,x,y,w,h,txt,color,op){const e=document.createElement("div");e.className="obj "+cls;e.textContent=txt||"";if(color)e.style.borderColor=color;e.style.opacity=op;e.style.left=x/W*100+"%";e.style.top=y/H*100+"%";e.style.width=w/W*100+"%";e.style.height=h/H*100+"%";$("gameArea").appendChild(e)}
+function drawPlayer(p){const e=document.createElement("div");e.className="player "+p.cls;e.style.opacity=p.alive===false?.28:1;e.innerHTML=`<span class=tag>${p.name}</span>${p.emoji}`;e.style.left=p.x/W*100+"%";e.style.top=p.y/H*100+"%";$("gameArea").appendChild(e)}
+function showResult(ps){show("result");const r=[...ps].sort((a,b)=>b.score-a.score),mx=Math.max(...r.map(p=>p.score),1);$("winner").textContent=`Campeão: ${r[0].emoji} ${r[0].name}`;$("ranking").innerHTML=r.map((p,i)=>`<div>${i===0?"🥇":i===1?"🥈":i===2?"🥉":"🎲"} <b>${p.emoji} ${p.name}</b> — ${p.score} pts<div class=barWrap><div class=bar style="width:${p.score/mx*100}%;background:${p.color}"></div></div></div>`).join("")}
+function hitBox(a,o){return !(a.x+a.w<o.x||a.x>o.x+o.w||a.y+a.h<o.y||a.y>o.y+o.h)}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}function dist(a,b,c,d){return Math.hypot(a-c,b-d)}
+window.addEventListener("keydown",e=>{const m={w:"up",s:"down",a:"left",d:"right"," ":"action",ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"};if(m[e.key]){keys[m[e.key]]=true;socket.emit("input",keys);e.preventDefault()}},{passive:false});
+window.addEventListener("keyup",e=>{const m={w:"up",s:"down",a:"left",d:"right"," ":"action",ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"};if(m[e.key]){keys[m[e.key]]=false;socket.emit("input",keys)}});
+</script>
+</body>
+</html>
