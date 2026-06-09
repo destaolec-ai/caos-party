@@ -1,7 +1,7 @@
 {
-  "name": "caos-party-socketio-v5",
-  "version": "5.0.0",
-  "description": "Caos Party V5 limpo - personagens, som, mobile e minigames menos repetidos",
+  "name": "caos-party-socketio-v7-mobile-turbo",
+  "version": "7.0.0",
+  "description": "Caos Party V7 Mobile Turbo - desempenho melhor no celular",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
