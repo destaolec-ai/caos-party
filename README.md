@@ -1,27 +1,17 @@
-# Caos Party Socket.io
+# Caos Party Socket.io V3
 
-Essa é a versão com servidor real usando Node.js + Socket.io.
+Atualização:
+- Basquete Caótico
+- Mais variedade no sorteio de minigames
+- Sorteio evita repetir categoria recente
+- Chão Sumindo 2.0 corrigido
+- Novos modos: Corrida dos Orbes e Biscoito Turbo
+- Mantém futebol, vôlei, PvP e servidor Socket.io
 
-## Como rodar no notebook
+Substitua no GitHub:
+- server.js
+- package.json
+- public/index.html
 
-1. Instale o Node.js.
-2. Abra a pasta do projeto no terminal.
-3. Rode:
-
-```bash
-npm install
-npm start
-```
-
-4. Abra no navegador:
-
-```txt
-http://localhost:3000
-```
-
-Para outra pessoa entrar pela internet, precisa hospedar esse projeto em Render, Railway, Fly.io, VPS ou similar.
-
-## Importante
-
-Essa versão NÃO funciona só arrastando o HTML no Netlify Drop.
-Ela precisa rodar o arquivo `server.js`.
+Depois no Render:
+Manual Deploy > Deploy latest commit
