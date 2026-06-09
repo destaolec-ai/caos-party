@@ -1,7 +1,7 @@
 {
-  "name": "caos-party-socketio-v9-corrigido",
-  "version": "9.0.0",
-  "description": "Caos Party V9 Corrigido - build testada sem bug de JavaScript",
+  "name": "caos-party-v10-resgate",
+  "version": "10.0.0",
+  "description": "Caos Party V10 Resgate - lobby e sala est\u00e1veis",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

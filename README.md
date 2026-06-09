@@ -1,17 +1,33 @@
-# Caos Party Socket.io V3
+# Caos Party V10 Resgate
 
-Atualização:
-- Basquete Caótico
-- Mais variedade no sorteio de minigames
-- Sorteio evita repetir categoria recente
-- Chão Sumindo 2.0 corrigido
-- Novos modos: Corrida dos Orbes e Biscoito Turbo
-- Mantém futebol, vôlei, PvP e servidor Socket.io
+Esta versão foi feita para recuperar o funcionamento principal:
 
-Substitua no GitHub:
-- server.js
-- package.json
-- public/index.html
+- Criar sala
+- Entrar em sala
+- Escolher personagens
+- Jogar online
+- Powerups simples
+- Armas
+- Modo desempenho no celular
 
-Depois no Render:
-Manual Deploy > Deploy latest commit
+Estrutura correta:
+
+```txt
+server.js
+package.json
+README.md
+public/
+  index.html
+```
+
+Depois do upload no GitHub:
+
+1. Render
+2. Manual Deploy
+3. Deploy latest commit
+
+Teste com:
+
+```txt
+https://caos-party.onrender.com?v=10
+```
