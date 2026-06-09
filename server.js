@@ -13,7 +13,8 @@ const io = new Server(server, {
   perMessageDeflate: false
 });
 
-app.use(express.static("public", { maxAge: "0s", etag: false }));
+app.use(express.static("public", { maxAge: "0s", etag: false, lastModified: false }));
+app.get("/health", (req, res) => res.json({ ok: true, version: "v13" }));
 
 const rooms = new Map();
 
@@ -21,9 +22,7 @@ const CHARS = [
   ["🦊","#ff4757","Raposa"],["🐧","#38bdf8","Pinguim"],["🐸","#22c55e","Sapo"],["🐰","#a855f7","Coelho"],
   ["🐵","#f97316","Macaco"],["🐼","#e5e7eb","Panda"],["🐱","#facc15","Gato"],["🐶","#fb7185","Dog"],
   ["🐲","#14b8a6","Dragão"],["🦁","#f59e0b","Leão"],["🦄","#ec4899","Unicórnio"],["🦖","#84cc16","Dino"],
-  ["🐙","#8b5cf6","Polvo"],["🦈","#0ea5e9","Tubarão"],["🐢","#16a34a","Tartaruga"],["🐯","#f97316","Tigre"],
-  ["🦅","#fbbf24","Águia"],["🐻","#92400e","Urso"],["🦇","#7c3aed","Morcego"],["🐍","#65a30d","Cobra"],
-  ["🦀","#ef4444","Caranguejo"],["🐮","#f9fafb","Vaquinha"],["🐷","#f9a8d4","Porquinho"],["🤖","#94a3b8","Robô"]
+  ["🐙","#8b5cf6","Polvo"],["🦈","#0ea5e9","Tubarão"],["🐢","#16a34a","Tartaruga"],["🐯","#f97316","Tigre"]
 ].map((c,i)=>({id:i,emoji:c[0],color:c[1],name:c[2]}));
 
 function code(){
@@ -149,4 +148,4 @@ setInterval(()=>{
 },1000*60*10);
 
 const PORT=process.env.PORT||3000;
-server.listen(PORT,()=>console.log("Caos Party V12 Cenários rodando na porta "+PORT));
+server.listen(PORT,()=>console.log("Caos Party V13 Conexão Fix rodando na porta "+PORT));

@@ -1,7 +1,7 @@
 {
-  "name": "caos-party-v12-cenarios",
-  "version": "12.0.0",
-  "description": "Caos Party V12 - cen\u00e1rios vivos, mobile mais claro e conex\u00e3o melhor",
+  "name": "caos-party-v13-conexao-fix",
+  "version": "13.0.0",
+  "description": "Caos Party V13 Conex\u00e3o Fix - corrigindo conex\u00e3o infinita",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
