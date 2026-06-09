@@ -1,33 +1,20 @@
-# Caos Party V10 Resgate
+# Caos Party V12 Cenários
 
-Esta versão foi feita para recuperar o funcionamento principal:
+Base: V11 Conexão.
 
-- Criar sala
-- Entrar em sala
-- Escolher personagens
-- Jogar online
-- Powerups simples
-- Armas
-- Modo desempenho no celular
+Melhorias:
+- Mobile menos escuro e mais colorido.
+- Cenários diferentes por minigame.
+- Decoração visual nos mapas: nuvens, árvores, estrada, arena, minas, futebol etc.
+- Personagens continuam com corpo/cartoon, não bolinhas.
+- Powerups com ícones próprios e frequência reduzida.
+- Mantém melhorias de conexão da V11:
+  - estado compactado;
+  - suavização no cliente;
+  - input mais confiável;
+  - snapshots mais leves.
 
-Estrutura correta:
-
+Teste:
 ```txt
-server.js
-package.json
-README.md
-public/
-  index.html
-```
-
-Depois do upload no GitHub:
-
-1. Render
-2. Manual Deploy
-3. Deploy latest commit
-
-Teste com:
-
-```txt
-https://caos-party.onrender.com?v=10
+https://caos-party.onrender.com?v=12
 ```

@@ -21,7 +21,9 @@ const CHARS = [
   ["🦊","#ff4757","Raposa"],["🐧","#38bdf8","Pinguim"],["🐸","#22c55e","Sapo"],["🐰","#a855f7","Coelho"],
   ["🐵","#f97316","Macaco"],["🐼","#e5e7eb","Panda"],["🐱","#facc15","Gato"],["🐶","#fb7185","Dog"],
   ["🐲","#14b8a6","Dragão"],["🦁","#f59e0b","Leão"],["🦄","#ec4899","Unicórnio"],["🦖","#84cc16","Dino"],
-  ["🐙","#8b5cf6","Polvo"],["🦈","#0ea5e9","Tubarão"],["🐢","#16a34a","Tartaruga"],["🐯","#f97316","Tigre"]
+  ["🐙","#8b5cf6","Polvo"],["🦈","#0ea5e9","Tubarão"],["🐢","#16a34a","Tartaruga"],["🐯","#f97316","Tigre"],
+  ["🦅","#fbbf24","Águia"],["🐻","#92400e","Urso"],["🦇","#7c3aed","Morcego"],["🐍","#65a30d","Cobra"],
+  ["🦀","#ef4444","Caranguejo"],["🐮","#f9fafb","Vaquinha"],["🐷","#f9a8d4","Porquinho"],["🤖","#94a3b8","Robô"]
 ].map((c,i)=>({id:i,emoji:c[0],color:c[1],name:c[2]}));
 
 function code(){
@@ -102,7 +104,7 @@ io.on("connection", socket=>{
   socket.on("input", input=>{
     const room=rooms.get(socket.data.room);
     if(!room) return;
-    io.to(room.hostId).volatile.emit("playerInput",{
+    io.to(room.hostId).emit("playerInput",{
       playerId:socket.data.playerId,
       input:{
         up:!!input?.up,down:!!input?.down,left:!!input?.left,right:!!input?.right,action:!!input?.action
@@ -147,4 +149,4 @@ setInterval(()=>{
 },1000*60*10);
 
 const PORT=process.env.PORT||3000;
-server.listen(PORT,()=>console.log("Caos Party V10 Resgate rodando na porta "+PORT));
+server.listen(PORT,()=>console.log("Caos Party V12 Cenários rodando na porta "+PORT));

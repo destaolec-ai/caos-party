@@ -1,7 +1,7 @@
 {
-  "name": "caos-party-v10-resgate",
-  "version": "10.0.0",
-  "description": "Caos Party V10 Resgate - lobby e sala est\u00e1veis",
+  "name": "caos-party-v12-cenarios",
+  "version": "12.0.0",
+  "description": "Caos Party V12 - cen\u00e1rios vivos, mobile mais claro e conex\u00e3o melhor",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
