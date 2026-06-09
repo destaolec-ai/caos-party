@@ -1,7 +1,7 @@
 {
-  "name": "caos-party-socketio-v8",
-  "version": "8.0.0",
-  "description": "Caos Party V8 - powerups, personagens, mobile e modo desempenho",
+  "name": "caos-party-socketio-v9-corrigido",
+  "version": "9.0.0",
+  "description": "Caos Party V9 Corrigido - build testada sem bug de JavaScript",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

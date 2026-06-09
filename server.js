@@ -217,4 +217,4 @@ setInterval(() => {
 }, 1000 * 60 * 10);
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log("Caos Party V8 rodando na porta " + PORT));
+server.listen(PORT, () => console.log("Caos Party V9 Corrigido rodando na porta " + PORT));
