@@ -7,12 +7,16 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: { origin: "*" },
-  pingInterval: 10000,
-  pingTimeout: 20000,
-  transports: ["websocket", "polling"]
+  pingInterval: 8000,
+  pingTimeout: 18000,
+  transports: ["websocket", "polling"],
+  perMessageDeflate: false
 });
 
-app.use(express.static("public"));
+app.use(express.static("public", {
+  maxAge: "5m",
+  etag: true
+}));
 
 const rooms = new Map();
 
@@ -36,7 +40,12 @@ function publicPlayers(room) {
 function broadcastLobby(code) {
   const room = rooms.get(code);
   if (!room) return;
-  io.to(code).emit("lobby", { code, players: publicPlayers(room), hostId: room.hostId });
+  io.to(code).emit("lobby", {
+    code,
+    players: publicPlayers(room),
+    hostId: room.hostId,
+    createdAt: room.createdAt
+  });
 }
 
 function reindexRoom(room) {
@@ -47,6 +56,7 @@ function reindexRoom(room) {
     { emoji: "🐸", color: "#22c55e" },
     { emoji: "🐰", color: "#a855f7" }
   ];
+
   room.players.forEach((p, index) => {
     const id = index + 1;
     p.id = id;
@@ -65,6 +75,7 @@ io.on("connection", (socket) => {
     const room = {
       code,
       hostId: socket.id,
+      createdAt: Date.now(),
       started: false,
       players: [{
         socketId: socket.id,
@@ -148,7 +159,8 @@ io.on("connection", (socket) => {
     };
 
     player.input = clean;
-    io.to(room.hostId).emit("playerInput", { playerId: player.id, input: clean });
+    // volatile: se atrasar, descarta input velho em vez de acumular lag
+    io.to(room.hostId).volatile.emit("playerInput", { playerId: player.id, input: clean });
   });
 
   socket.on("gameState", (state) => {
@@ -186,5 +198,14 @@ io.on("connection", (socket) => {
   });
 });
 
+setInterval(() => {
+  const now = Date.now();
+  for (const [code, room] of rooms) {
+    if (!room.players.length || now - room.createdAt > 1000 * 60 * 60 * 4) {
+      rooms.delete(code);
+    }
+  }
+}, 1000 * 60 * 10);
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log("Caos Party Socket V3 rodando na porta " + PORT));
+server.listen(PORT, () => console.log("Caos Party Socket V4 rodando na porta " + PORT));
