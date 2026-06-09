@@ -14,7 +14,7 @@ const io = new Server(server, {
 });
 
 app.use(express.static("public", { maxAge: "0s", etag: false, lastModified: false }));
-app.get("/health", (req, res) => res.json({ ok: true, version: "v13" }));
+app.get("/health", (req, res) => res.json({ ok: true, version: "v14" }));
 
 const rooms = new Map();
 
@@ -148,4 +148,4 @@ setInterval(()=>{
 },1000*60*10);
 
 const PORT=process.env.PORT||3000;
-server.listen(PORT,()=>console.log("Caos Party V13 Conexão Fix rodando na porta "+PORT));
+server.listen(PORT,()=>console.log("Caos Party V14 Correção Real rodando na porta "+PORT));

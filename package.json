@@ -1,7 +1,7 @@
 {
-  "name": "caos-party-v13-conexao-fix",
-  "version": "13.0.0",
-  "description": "Caos Party V13 Conex\u00e3o Fix - corrigindo conex\u00e3o infinita",
+  "name": "caos-party-v14-correcao-real",
+  "version": "14.0.0",
+  "description": "Caos Party V14 - corre\u00e7\u00e3o real do JavaScript e conex\u00e3o",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

@@ -1,18 +1,25 @@
-# Caos Party V13 Conexão Fix
+# Caos Party V14 Correção Real
 
-Base: V10 Resgate.
+Esta versão corrige o erro que travava a V13.
 
-Correções:
-- Corrige o problema de "Conectando ao servidor..." infinito com mensagens de erro melhores.
-- Mantém o carregamento do Socket.io pelo servidor.
-- Adiciona rota `/health` para testar se o servidor está vivo.
-- Usa conexão polling primeiro e depois websocket, mais compatível com Render/celular.
-- Input do jogador enviado de forma mais confiável.
-- Estado do jogo menor para melhorar host/cliente.
-- Personagens com visual melhor, sem bolinha.
-- Powerups com ícones próprios e menor frequência.
+## Corrigido
 
-Estrutura correta:
+- Erro de JavaScript no `public/index.html`.
+- Tela presa em "Conectando ao servidor".
+- Botão "Criar sala" sem resposta.
+- Bloco de envio/recebimento de estado do jogo refeito.
+- Servidor com rota `/health`.
+
+## Mantido
+
+- Base estável da V10.
+- Personagens com visual melhor.
+- Powerups com ícones próprios.
+- Menor frequência de powerups.
+- Modo desempenho.
+- Conexão com Socket.io.
+
+## Estrutura correta
 
 ```txt
 server.js
@@ -22,19 +29,22 @@ public/
   index.html
 ```
 
-Teste:
+## Teste do servidor
+
+Depois do deploy, abre:
+
 ```txt
 https://caos-party.onrender.com/health
 ```
 
-Se aparecer:
+Tem que aparecer:
+
 ```json
-{"ok":true,"version":"v13"}
+{"ok":true,"version":"v14"}
 ```
 
-o servidor está rodando.
+## Teste do jogo
 
-Jogo:
 ```txt
-https://caos-party.onrender.com?v=13
+https://caos-party.onrender.com?v=14
 ```
