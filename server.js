@@ -29,7 +29,15 @@ const CHARS = [
   { emoji: "🐲", color: "#14b8a6", name: "Dragão" },
   { emoji: "🦁", color: "#f59e0b", name: "Leão" },
   { emoji: "🐺", color: "#94a3b8", name: "Lobo" },
-  { emoji: "🦝", color: "#64748b", name: "Guaxinim" }
+  { emoji: "🦝", color: "#64748b", name: "Guaxinim" },
+  { emoji: "🦄", color: "#ec4899", name: "Unicórnio" },
+  { emoji: "🦖", color: "#84cc16", name: "Dino" },
+  { emoji: "🐙", color: "#8b5cf6", name: "Polvo" },
+  { emoji: "🦈", color: "#0ea5e9", name: "Tubarão" },
+  { emoji: "🐢", color: "#16a34a", name: "Tartaruga" },
+  { emoji: "🦉", color: "#a16207", name: "Coruja" },
+  { emoji: "🐯", color: "#f97316", name: "Tigre" },
+  { emoji: "🐨", color: "#cbd5e1", name: "Coala" }
 ];
 
 function makeCode() {
@@ -209,4 +217,4 @@ setInterval(() => {
 }, 1000 * 60 * 10);
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log("Caos Party V7 Mobile Turbo rodando na porta " + PORT));
+server.listen(PORT, () => console.log("Caos Party V8 rodando na porta " + PORT));

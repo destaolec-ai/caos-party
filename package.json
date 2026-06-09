@@ -1,7 +1,7 @@
 {
-  "name": "caos-party-socketio-v7-mobile-turbo",
-  "version": "7.0.0",
-  "description": "Caos Party V7 Mobile Turbo - desempenho melhor no celular",
+  "name": "caos-party-socketio-v8",
+  "version": "8.0.0",
+  "description": "Caos Party V8 - powerups, personagens, mobile e modo desempenho",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
