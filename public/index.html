@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Caos Party V8</title>
+<title>Caos Party V9 Corrigido</title>
 <script src="/socket.io/socket.io.js"></script>
 <style>
 :root{
@@ -97,7 +97,7 @@ body.lowPerf .card{backdrop-filter:none}
 <body>
 <div id="menu" class="screen active">
   <div class="card">
-    <div class="title">🎮 Caos Party V8</div>
+    <div class="title">🎮 Caos Party V9 Corrigido</div>
     <p><span class="pill">powerups reais</span><span class="pill">armas</span><span class="pill">mais personagens</span><span class="pill">mobile melhor</span></p>
     <div class="grid">
       <div class="mode"><b>🌐 Criar sala</b><p class="small">Host cria a sala e joga junto.</p><select id="roundSelect"><option>5</option><option selected>7</option><option>10</option></select><br><button class="blue" onclick="createRoom()">Criar sala</button></div>
@@ -216,7 +216,28 @@ function tickAlternada(){players.forEach(p=>{const i=getInput(p);let k=i.right?"
 function initBoat(){game.bg="linear-gradient(180deg,#0ea5e9,#075985 55%,#083344)";$("instructions").textContent="Barco: desvie de pedra/tronco. ● arrancada.";timeLeft=34;lanes();objects=[{type:"checkpoint",x:W-86,y:25,w:58,h:95,txt:"🏁"}];for(let i=0;i<12;i++)objects.push({type:i%2?"rock":"log",x:170+Math.random()*(W-280),y:55+i*39,w:i%2?52:98,h:i%2?52:32,vx:(i%2?1:-1)*(2.2+Math.random()*2),txt:i%2?"🪨":"🪵"})}
 function tickBoat(){players.forEach(p=>{const i=getInput(p);p.cool=Math.max(0,p.cool||0);if(i.action&&p.cool<=0){p.cool=35;p.x+=45;fx.push({type:"dashFx",x:p.x-25,y:p.y+18,w:80,h:16,life:8});emitSound("shoot")}if(p.x>W-115&&p.y<135&&!p.done){p.done=true;miniScores[p.id]+=12;emitSound("score")}});objects.forEach(o=>{if(o.type==="rock"||o.type==="log"){o.x+=o.vx;if(o.x<20||o.x>W-o.w-20)o.vx*=-1;players.forEach(p=>{if(p.alive&&!p.done&&hit({x:p.x,y:p.y,w:46,h:46},o)){miniScores[p.id]-=2;kb(p,o.x+o.w/2,o.y+o.h/2,18,16)}})}})}
 function initTraffic(){game.bg="linear-gradient(90deg,#111827,#374151,#111827)";$("instructions").textContent="Avenida 2.0: carros, cones e lasers. ● dash.";timeLeft=34;players.forEach((p,i)=>{p.x=60+i*56;p.y=H-65});objects=[{type:"checkpoint",x:0,y:18,w:W,h:50,txt:"CHEGADA"}];for(let r=0;r<7;r++)for(let c=0;c<3;c++)objects.push({type:"car",x:80+c*330+Math.random()*80,y:82+r*60,w:72,h:42,vx:(r%2?1:-1)*(4.5+r*.28),txt:r%2?"🚙":"🚗"});for(let i=0;i<12;i++)objects.push({type:"cone",x:160+Math.random()*(W-260),y:80+Math.random()*(H-170),w:34,h:34,txt:"🚧"});for(let i=0;i<3;i++)objects.push({type:"laser",x:230+i*230,y:115+i*90,w:22,h:120,vy:i%2?2.2:-2.2})}
-function tickTraffic(){players.forEach(p=>{dash(p);if(p.y<70&&!p.done){p.done=true;miniScores[p.id]+=12;emitSound("score")}});objects.forEach(o=>{if(o.type==="car"){o.x+=o.vx;if(o.vx>0&&o.x>W+80)o.x=-110;if(o.vx<0&&o.x<-120)o.x=W+80;players.forEach(p=>{if(p.alive&&!p.done&&hit({x:p.x,y:p.y,w:46,h:46},o)){miniScores[p.id]-=3;kb(p,o.x+o.w/2,o.y+o.h/2,20,18)}})}if(o.type==="cone"){players.forEach(p=>{if(p.alive&&!p.done&&hit({x:p.x,y:p.y,w:46,h:46},o)){miniScores[p.id]-=1;kb(p,o.x+17,o.y+17,10,7)}})}if(o.type==="laser"){o.y+=o.vy;if(o.y<70||o.y>H-180)o.vy*=-1;players.forEach(p=>{if(p.alive&&!p.done&&hit({x:p.x,y:p.y,w:46,h:46},o)){miniScores[p.id]-=2;kb(p,o.x+o.w/2,o.y+o.h/2,16,12)}})}})}})}
+function tickTraffic(){
+  players.forEach(p=>{
+    dash(p);
+    if(p.y<70&&!p.done){p.done=true;miniScores[p.id]+=12;emitSound("score")}
+  });
+  objects.forEach(o=>{
+    if(o.type==="car"){
+      o.x+=o.vx;
+      if(o.vx>0&&o.x>W+80)o.x=-110;
+      if(o.vx<0&&o.x<-120)o.x=W+80;
+      players.forEach(p=>{if(p.alive&&!p.done&&hit({x:p.x,y:p.y,w:46,h:46},o)){miniScores[p.id]-=3;kb(p,o.x+o.w/2,o.y+o.h/2,20,18)}});
+    }
+    if(o.type==="cone"){
+      players.forEach(p=>{if(p.alive&&!p.done&&hit({x:p.x,y:p.y,w:46,h:46},o)){miniScores[p.id]-=1;kb(p,o.x+17,o.y+17,10,7)}});
+    }
+    if(o.type==="laser"){
+      o.y+=o.vy;
+      if(o.y<70||o.y>H-180)o.vy*=-1;
+      players.forEach(p=>{if(p.alive&&!p.done&&hit({x:p.x,y:p.y,w:46,h:46},o)){miniScores[p.id]-=2;kb(p,o.x+o.w/2,o.y+o.h/2,16,12)}});
+    }
+  });
+}
 function initIce(){game.bg="linear-gradient(160deg,#bae6fd,#0284c7)";$("instructions").textContent="Gelo: escorrega até a chegada. ● freia/empurra perto.";timeLeft=30;lanes();objects=[{type:"checkpoint",x:W-75,y:20,w:50,h:H-40,txt:"🏁"}];for(let i=0;i<7;i++)objects.push({type:"rock",x:240+i*85,y:90+(i%4)*105,w:48,h:48,txt:"🧊"})}
 function tickIce(){players.forEach(p=>{const i=getInput(p);p.vx=(p.vx||0)*.96+(i.right?0.55:0)+(i.left?-0.55:0);p.vy=(p.vy||0)*.96+(i.down?0.35:0)+(i.up?-0.35:0);p.x=clamp(p.x+p.vx,0,W-46);p.y=clamp(p.y+p.vy,0,H-46);if(i.action){p.vx*=.75;p.vy*=.75;melee(p,70,13,10,0)}if(p.x>W-105&&!p.done){p.done=true;miniScores[p.id]+=12;emitSound("score")}});objects.forEach(o=>{if(o.type==="rock")players.forEach(p=>{if(!p.done&&hit({x:p.x,y:p.y,w:46,h:46},o))kb(p,o.x+24,o.y+24,13,10)})})}
 function initFall(){game.bg="linear-gradient(160deg,#111827,#020617)";$("instructions").textContent="Chão Sumindo 3.0: agora nasce seguro e some em ondas.";timeLeft=25;tiles=[];objects=[];const s=68,g=8,cols=8,rows=5,startX=(W-(cols*s+(cols-1)*g))/2,startY=70;for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)tiles.push({type:"tile",x:startX+c*(s+g),y:startY+r*(s+g),w:s,h:s,alive:true,warn:0,idx:r*cols+c});const spawn=[0,7,32,39];players.forEach((p,i)=>{const t=tiles[spawn[i]||0];p.x=t.x+11;p.y=t.y+11;p.grace=70})}
