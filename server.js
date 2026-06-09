@@ -13,12 +13,24 @@ const io = new Server(server, {
   perMessageDeflate: false
 });
 
-app.use(express.static("public", {
-  maxAge: "5m",
-  etag: true
-}));
+app.use(express.static("public", { maxAge: "2m", etag: true }));
 
 const rooms = new Map();
+
+const CHARS = [
+  { emoji: "🦊", color: "#ff4757", name: "Raposa" },
+  { emoji: "🐧", color: "#38bdf8", name: "Pinguim" },
+  { emoji: "🐸", color: "#22c55e", name: "Sapo" },
+  { emoji: "🐰", color: "#a855f7", name: "Coelho" },
+  { emoji: "🐵", color: "#f97316", name: "Macaco" },
+  { emoji: "🐼", color: "#e5e7eb", name: "Panda" },
+  { emoji: "🐱", color: "#facc15", name: "Gato" },
+  { emoji: "🐶", color: "#fb7185", name: "Dog" },
+  { emoji: "🐲", color: "#14b8a6", name: "Dragão" },
+  { emoji: "🦁", color: "#f59e0b", name: "Leão" },
+  { emoji: "🐺", color: "#94a3b8", name: "Lobo" },
+  { emoji: "🦝", color: "#64748b", name: "Guaxinim" }
+];
 
 function makeCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -33,36 +45,24 @@ function publicPlayers(room) {
     name: p.name,
     emoji: p.emoji,
     color: p.color,
+    charIndex: p.charIndex,
     score: p.score || 0
   }));
 }
 
-function broadcastLobby(code) {
-  const room = rooms.get(code);
-  if (!room) return;
-  io.to(code).emit("lobby", {
-    code,
-    players: publicPlayers(room),
+function broadcastLobby(room) {
+  io.to(room.code).emit("lobby", {
+    code: room.code,
     hostId: room.hostId,
-    createdAt: room.createdAt
+    players: publicPlayers(room),
+    chars: CHARS
   });
 }
 
-function reindexRoom(room) {
-  const base = [
-    null,
-    { emoji: "🦊", color: "#ff4757" },
-    { emoji: "🐧", color: "#38bdf8" },
-    { emoji: "🐸", color: "#22c55e" },
-    { emoji: "🐰", color: "#a855f7" }
-  ];
-
-  room.players.forEach((p, index) => {
-    const id = index + 1;
-    p.id = id;
-    p.name = p.socketId === room.hostId ? "Host" : "P" + id;
-    p.emoji = base[id].emoji;
-    p.color = base[id].color;
+function reindex(room) {
+  room.players.forEach((p, idx) => {
+    p.id = idx + 1;
+    p.name = p.socketId === room.hostId ? "Host" : "P" + p.id;
   });
 }
 
@@ -72,19 +72,20 @@ io.on("connection", (socket) => {
     do code = makeCode();
     while (rooms.has(code));
 
+    const c = CHARS[0];
     const room = {
       code,
       hostId: socket.id,
-      createdAt: Date.now(),
       started: false,
+      createdAt: Date.now(),
       players: [{
         socketId: socket.id,
         id: 1,
         name: "Host",
-        emoji: "🦊",
-        color: "#ff4757",
-        score: 0,
-        input: { up:false, down:false, left:false, right:false, action:false }
+        emoji: c.emoji,
+        color: c.color,
+        charIndex: 0,
+        score: 0
       }]
     };
 
@@ -92,14 +93,13 @@ io.on("connection", (socket) => {
     socket.join(code);
     socket.data.roomCode = code;
     socket.data.playerId = 1;
-    socket.data.isHost = true;
 
-    cb({ ok: true, code, playerId: 1, players: publicPlayers(room) });
-    broadcastLobby(code);
+    cb({ ok: true, code, playerId: 1, players: publicPlayers(room), chars: CHARS });
+    broadcastLobby(room);
   });
 
-  socket.on("joinRoom", (codeRaw, cb) => {
-    const code = String(codeRaw || "").trim().toUpperCase();
+  socket.on("joinRoom", (rawCode, cb) => {
+    const code = String(rawCode || "").trim().toUpperCase();
     const room = rooms.get(code);
 
     if (!room) return cb({ ok: false, error: "Sala não encontrada" });
@@ -107,49 +107,48 @@ io.on("connection", (socket) => {
     if (room.players.length >= 4) return cb({ ok: false, error: "Sala cheia" });
 
     const id = room.players.length + 1;
-    const base = [
-      null,
-      { emoji: "🦊", color: "#ff4757" },
-      { emoji: "🐧", color: "#38bdf8" },
-      { emoji: "🐸", color: "#22c55e" },
-      { emoji: "🐰", color: "#a855f7" }
-    ][id];
+    const c = CHARS[(id - 1) % CHARS.length];
 
     room.players.push({
       socketId: socket.id,
       id,
       name: "P" + id,
-      emoji: base.emoji,
-      color: base.color,
-      score: 0,
-      input: { up:false, down:false, left:false, right:false, action:false }
+      emoji: c.emoji,
+      color: c.color,
+      charIndex: (id - 1) % CHARS.length,
+      score: 0
     });
 
     socket.join(code);
     socket.data.roomCode = code;
     socket.data.playerId = id;
-    socket.data.isHost = false;
 
-    cb({ ok: true, code, playerId: id, players: publicPlayers(room) });
-    broadcastLobby(code);
+    cb({ ok: true, code, playerId: id, players: publicPlayers(room), chars: CHARS });
+    broadcastLobby(room);
+  });
+
+  socket.on("setCharacter", (charIndex) => {
+    const room = rooms.get(socket.data.roomCode);
+    if (!room || room.started) return;
+    const p = room.players.find(x => x.socketId === socket.id);
+    const c = CHARS[Number(charIndex) % CHARS.length];
+    if (!p || !c) return;
+    p.charIndex = Number(charIndex) % CHARS.length;
+    p.emoji = c.emoji;
+    p.color = c.color;
+    broadcastLobby(room);
   });
 
   socket.on("startGame", () => {
-    const code = socket.data.roomCode;
-    const room = rooms.get(code);
-    if (!room || room.hostId !== socket.id) return;
+    const room = rooms.get(socket.data.roomCode);
+    if (!room || room.hostId !== socket.id || room.players.length < 2) return;
     room.started = true;
-    io.to(code).emit("startGame", { players: publicPlayers(room) });
+    io.to(room.code).emit("startGame", { players: publicPlayers(room) });
   });
 
   socket.on("input", (input) => {
-    const code = socket.data.roomCode;
-    const room = rooms.get(code);
+    const room = rooms.get(socket.data.roomCode);
     if (!room) return;
-
-    const player = room.players.find(p => p.socketId === socket.id);
-    if (!player) return;
-
     const clean = {
       up: !!input?.up,
       down: !!input?.down,
@@ -157,44 +156,46 @@ io.on("connection", (socket) => {
       right: !!input?.right,
       action: !!input?.action
     };
-
-    player.input = clean;
-    // volatile: se atrasar, descarta input velho em vez de acumular lag
-    io.to(room.hostId).volatile.emit("playerInput", { playerId: player.id, input: clean });
+    io.to(room.hostId).volatile.emit("playerInput", {
+      playerId: socket.data.playerId,
+      input: clean
+    });
   });
 
   socket.on("gameState", (state) => {
-    const code = socket.data.roomCode;
-    const room = rooms.get(code);
+    const room = rooms.get(socket.data.roomCode);
     if (!room || room.hostId !== socket.id) return;
-    socket.to(code).volatile.emit("gameState", state);
+    socket.to(room.code).volatile.emit("gameState", state);
+  });
+
+  socket.on("sound", (name) => {
+    const room = rooms.get(socket.data.roomCode);
+    if (!room) return;
+    socket.to(room.code).volatile.emit("sound", name);
   });
 
   socket.on("gameResult", (players) => {
-    const code = socket.data.roomCode;
-    const room = rooms.get(code);
+    const room = rooms.get(socket.data.roomCode);
     if (!room || room.hostId !== socket.id) return;
-    io.to(code).emit("gameResult", players);
+    io.to(room.code).emit("gameResult", players);
     room.started = false;
     room.players.forEach(p => p.score = 0);
-    broadcastLobby(code);
+    broadcastLobby(room);
   });
 
   socket.on("disconnect", () => {
-    const code = socket.data.roomCode;
-    if (!code) return;
-    const room = rooms.get(code);
+    const room = rooms.get(socket.data.roomCode);
     if (!room) return;
 
     if (room.hostId === socket.id) {
-      io.to(code).emit("hostLeft");
-      rooms.delete(code);
+      io.to(room.code).emit("hostLeft");
+      rooms.delete(room.code);
       return;
     }
 
     room.players = room.players.filter(p => p.socketId !== socket.id);
-    reindexRoom(room);
-    broadcastLobby(code);
+    reindex(room);
+    broadcastLobby(room);
   });
 });
 
@@ -208,4 +209,4 @@ setInterval(() => {
 }, 1000 * 60 * 10);
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log("Caos Party Socket V4 rodando na porta " + PORT));
+server.listen(PORT, () => console.log("Caos Party V5 rodando na porta " + PORT));

@@ -1,7 +1,7 @@
 {
-  "name": "caos-party-socketio-v4",
-  "version": "4.0.0",
-  "description": "Caos Party online - lobby animado, corridas, barco e rede mais leve",
+  "name": "caos-party-socketio-v5",
+  "version": "5.0.0",
+  "description": "Caos Party V5 limpo - personagens, som, mobile e minigames menos repetidos",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
