@@ -1,25 +1,23 @@
-# Caos Party V14 Correção Real
+# Laser Tank Arena V1
 
-Esta versão corrige o erro que travava a V13.
+Shooter online simples para focar em um jogo só.
 
-## Corrigido
+## Mecânica principal
 
-- Erro de JavaScript no `public/index.html`.
-- Tela presa em "Conectando ao servidor".
-- Botão "Criar sala" sem resposta.
-- Bloco de envio/recebimento de estado do jogo refeito.
-- Servidor com rota `/health`.
+- Arena estilo lasertag.
+- Chão preto e paredes brancas.
+- Tanques em visão de cima.
+- Servidor controla física, tiros, dano, XP e powerups.
 
-## Mantido
+## Evolução
 
-- Base estável da V10.
-- Personagens com visual melhor.
-- Powerups com ícones próprios.
-- Menor frequência de powerups.
-- Modo desempenho.
-- Conexão com Socket.io.
+Quando o tanque sobe de nível, o jogador escolhe:
 
-## Estrutura correta
+- 💥 Shotgun: perto, espalha tiro.
+- 🎯 Sniper: longe, tiro forte e lento.
+- ⚡ Rifle: médio alcance, cadência rápida.
+
+## Estrutura
 
 ```txt
 server.js
@@ -29,22 +27,15 @@ public/
   index.html
 ```
 
-## Teste do servidor
-
-Depois do deploy, abre:
+Render:
 
 ```txt
-https://caos-party.onrender.com/health
+Build Command: npm install
+Start Command: npm start
 ```
 
-Tem que aparecer:
-
-```json
-{"ok":true,"version":"v14"}
-```
-
-## Teste do jogo
+Teste com:
 
 ```txt
-https://caos-party.onrender.com?v=14
+https://SEU-LINK.onrender.com?v=laser1
 ```

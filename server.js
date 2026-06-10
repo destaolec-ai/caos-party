@@ -1,151 +1,26 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-
-const app = express();
-const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: { origin: "*" },
-  pingInterval: 10000,
-  pingTimeout: 20000,
-  transports: ["websocket", "polling"],
-  perMessageDeflate: false
-});
-
-app.use(express.static("public", { maxAge: "0s", etag: false, lastModified: false }));
-app.get("/health", (req, res) => res.json({ ok: true, version: "v14" }));
-
-const rooms = new Map();
-
-const CHARS = [
-  ["🦊","#ff4757","Raposa"],["🐧","#38bdf8","Pinguim"],["🐸","#22c55e","Sapo"],["🐰","#a855f7","Coelho"],
-  ["🐵","#f97316","Macaco"],["🐼","#e5e7eb","Panda"],["🐱","#facc15","Gato"],["🐶","#fb7185","Dog"],
-  ["🐲","#14b8a6","Dragão"],["🦁","#f59e0b","Leão"],["🦄","#ec4899","Unicórnio"],["🦖","#84cc16","Dino"],
-  ["🐙","#8b5cf6","Polvo"],["🦈","#0ea5e9","Tubarão"],["🐢","#16a34a","Tartaruga"],["🐯","#f97316","Tigre"]
-].map((c,i)=>({id:i,emoji:c[0],color:c[1],name:c[2]}));
-
-function code(){
-  const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let c="";
-  for(let i=0;i<4;i++) c+=a[Math.floor(Math.random()*a.length)];
-  return c;
-}
-
-function players(room){
-  return room.players.map(p=>({
-    id:p.id,name:p.name,emoji:p.emoji,color:p.color,charId:p.charId,score:p.score||0
-  }));
-}
-
-function lobby(room){
-  io.to(room.code).emit("lobby", {code:room.code,hostId:room.hostId,players:players(room),chars:CHARS});
-}
-
-io.on("connection", socket=>{
-  socket.on("createRoom", cb=>{
-    try{
-      let c;
-      do c=code(); while(rooms.has(c));
-      const ch=CHARS[0];
-      const room={
-        code:c,hostId:socket.id,started:false,created:Date.now(),
-        players:[{socketId:socket.id,id:1,name:"Host",emoji:ch.emoji,color:ch.color,charId:0,score:0}]
-      };
-      rooms.set(c,room);
-      socket.join(c);
-      socket.data.room=c;
-      socket.data.playerId=1;
-      cb && cb({ok:true,code:c,playerId:1,players:players(room),chars:CHARS});
-      lobby(room);
-    }catch(e){
-      cb && cb({ok:false,error:e.message});
-    }
-  });
-
-  socket.on("joinRoom",(raw,cb)=>{
-    try{
-      const c=String(raw||"").trim().toUpperCase();
-      const room=rooms.get(c);
-      if(!room) return cb && cb({ok:false,error:"Sala não encontrada"});
-      if(room.started) return cb && cb({ok:false,error:"Partida já começou"});
-      if(room.players.length>=4) return cb && cb({ok:false,error:"Sala cheia"});
-      const id=room.players.length+1;
-      const ch=CHARS[(id-1)%CHARS.length];
-      room.players.push({socketId:socket.id,id,name:"P"+id,emoji:ch.emoji,color:ch.color,charId:ch.id,score:0});
-      socket.join(c);
-      socket.data.room=c;
-      socket.data.playerId=id;
-      cb && cb({ok:true,code:c,playerId:id,players:players(room),chars:CHARS});
-      lobby(room);
-    }catch(e){
-      cb && cb({ok:false,error:e.message});
-    }
-  });
-
-  socket.on("setCharacter", charId=>{
-    const room=rooms.get(socket.data.room);
-    if(!room || room.started) return;
-    const p=room.players.find(x=>x.socketId===socket.id);
-    const ch=CHARS[Number(charId)||0] || CHARS[0];
-    if(!p) return;
-    p.charId=ch.id; p.emoji=ch.emoji; p.color=ch.color;
-    lobby(room);
-  });
-
-  socket.on("startGame", ()=>{
-    const room=rooms.get(socket.data.room);
-    if(!room || room.hostId!==socket.id || room.players.length<2) return;
-    room.started=true;
-    io.to(room.code).emit("startGame",{players:players(room)});
-  });
-
-  socket.on("input", input=>{
-    const room=rooms.get(socket.data.room);
-    if(!room) return;
-    io.to(room.hostId).emit("playerInput",{
-      playerId:socket.data.playerId,
-      input:{
-        up:!!input?.up,down:!!input?.down,left:!!input?.left,right:!!input?.right,action:!!input?.action
-      }
-    });
-  });
-
-  socket.on("gameState", state=>{
-    const room=rooms.get(socket.data.room);
-    if(!room || room.hostId!==socket.id) return;
-    socket.to(room.code).volatile.emit("gameState",state);
-  });
-
-  socket.on("gameResult", result=>{
-    const room=rooms.get(socket.data.room);
-    if(!room || room.hostId!==socket.id) return;
-    io.to(room.code).emit("gameResult",result);
-    room.started=false;
-    room.players.forEach(p=>p.score=0);
-    lobby(room);
-  });
-
-  socket.on("disconnect",()=>{
-    const room=rooms.get(socket.data.room);
-    if(!room) return;
-    if(room.hostId===socket.id){
-      io.to(room.code).emit("hostLeft");
-      rooms.delete(room.code);
-      return;
-    }
-    room.players=room.players.filter(p=>p.socketId!==socket.id);
-    room.players.forEach((p,i)=>{p.id=i+1;p.name=p.socketId===room.hostId?"Host":"P"+(i+1)});
-    lobby(room);
-  });
-});
-
-setInterval(()=>{
-  const now=Date.now();
-  for(const [c,r] of rooms){
-    if(now-r.created>1000*60*60*3) rooms.delete(c);
-  }
-},1000*60*10);
-
-const PORT=process.env.PORT||3000;
-server.listen(PORT,()=>console.log("Caos Party V14 Correção Real rodando na porta "+PORT));
+const express=require("express"),http=require("http"),{Server}=require("socket.io");
+const app=express(),httpServer=http.createServer(app);const io=new Server(httpServer,{cors:{origin:"*"},transports:["websocket","polling"],pingInterval:9000,pingTimeout:22000,perMessageDeflate:false});
+app.use(express.static("public",{maxAge:"0s",etag:false}));
+const W=1100,H=650,rooms=new Map();
+const COLORS=["#38bdf8","#fb7185","#4ade80","#facc15","#a78bfa","#f97316"],NAMES=["Azul","Rosa","Verde","Amarelo","Roxo","Laranja"];
+const WALLS=[{x:0,y:0,w:W,h:24},{x:0,y:H-24,w:W,h:24},{x:0,y:0,w:24,h:H},{x:W-24,y:0,w:24,h:H},{x:170,y:110,w:210,h:26},{x:730,y:110,w:210,h:26},{x:170,y:514,w:210,h:26},{x:730,y:514,w:210,h:26},{x:520,y:90,w:60,h:170},{x:520,y:390,w:60,h:170},{x:270,y:300,w:220,h:28},{x:610,y:300,w:220,h:28},{x:92,y:230,w:28,h:190},{x:980,y:230,w:28,h:190}];
+const POWER=[{kind:"heal",txt:"❤️"},{kind:"shield",txt:"🛡️"},{kind:"speed",txt:"🏎️"},{kind:"xp",txt:"⬆️"}];
+const WEAP={basic:{name:"Laser",emoji:"🔫",cd:17,dmg:22,speed:14,life:48,pellets:[0],size:12},shotgun:{name:"Shotgun",emoji:"💥",cd:30,dmg:15,speed:12,life:24,pellets:[-.34,-.17,0,.17,.34],size:12},sniper:{name:"Sniper",emoji:"🎯",cd:38,dmg:55,speed:19,life:76,pellets:[0],size:10},rifle:{name:"Rifle",emoji:"⚡",cd:9,dmg:14,speed:15,life:46,pellets:[0],size:10}};
+function code(){let a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",c="";for(let i=0;i<4;i++)c+=a[Math.floor(Math.random()*a.length)];return c}function clamp(v,a,b){return Math.max(a,Math.min(b,v))}function rect(a,b){return !(a.x+a.w<b.x||a.x>b.x+b.w||a.y+a.h<b.y||a.y>b.y+b.h)}
+function sp(i){return[{x:70,y:70,ang:0},{x:W-120,y:H-120,ang:Math.PI},{x:70,y:H-120,ang:0},{x:W-120,y:70,ang:Math.PI},{x:W/2-25,y:60,ang:Math.PI/2},{x:W/2-25,y:H-110,ang:-Math.PI/2}][i%6]}
+function mkP(sid,id){let s=sp(id-1);return{socketId:sid,id,name:"Tanque "+id,color:COLORS[(id-1)%COLORS.length],label:NAMES[(id-1)%NAMES.length],x:s.x,y:s.y,w:46,h:54,angle:s.ang,hp:100,maxHp:100,shield:0,score:0,kills:0,deaths:0,level:1,xp:0,needXp:60,weapon:"basic",upgrades:[],pendingUpgrade:false,speedBoost:0,cooldown:0,respawn:0,input:{}}}
+function pub(r){return{code:r.code,hostId:r.hostId,players:r.players.map(p=>({id:p.id,name:p.name,color:p.color,label:p.label,score:p.score,kills:p.kills,deaths:p.deaths,level:p.level,weapon:p.weapon}))}}
+function spawnPower(r){if(r.powers.length>=4)return;for(let t=0;t<40;t++){let p=POWER[Math.floor(Math.random()*POWER.length)],o={id:r.nextPower++,type:"power",kind:p.kind,txt:p.txt,x:60+Math.random()*(W-120),y:60+Math.random()*(H-120),w:34,h:34};if(!WALLS.some(w=>rect(o,w))){r.powers.push(o);return}}}
+function makeRoom(sock){let c;do c=code();while(rooms.has(c));let r={code:c,hostId:sock.id,created:Date.now(),started:false,players:[mkP(sock.id,1)],bullets:[],powers:[],effects:[],nextBullet:1,nextPower:1,tick:null,broadcast:null,powerTimer:0};rooms.set(c,r);return r}
+function bySock(r,sid){return r.players.find(p=>p.socketId===sid)}function reset(p){let s=sp(p.id-1);Object.assign(p,{x:s.x,y:s.y,angle:s.ang,hp:p.maxHp,shield:0,respawn:0,cooldown:25,input:{}})}
+function gainXp(r,p,a){if(!p||p.pendingUpgrade)return;p.xp+=a;while(p.xp>=p.needXp&&!p.pendingUpgrade){p.xp-=p.needXp;p.level++;p.needXp=Math.round(p.needXp*1.35+20);p.maxHp+=8;p.hp=Math.min(p.maxHp,p.hp+35);p.pendingUpgrade=true;r.effects.push({x:p.x+23,y:p.y+27,txt:"EVOLUIU!",life:35});io.to(p.socketId).emit("upgradeAvailable",{level:p.level})}}
+function damage(r,t,amount,aid){if(t.respawn>0)return;if(t.shield>0){let u=Math.min(t.shield,amount);t.shield-=u;amount-=u}if(amount<=0)return;t.hp-=amount;r.effects.push({x:t.x+23,y:t.y+27,txt:"✦",life:10});let atk=r.players.find(p=>p.id===aid);if(atk&&atk.id!==t.id)gainXp(r,atk,4);if(t.hp<=0){t.hp=0;t.deaths++;t.respawn=90;if(atk&&atk.id!==t.id){atk.kills++;atk.score+=100;gainXp(r,atk,42)}}}
+function shoot(r,p){if(p.cooldown>0||p.respawn>0||p.pendingUpgrade)return;let spec=WEAP[p.weapon]||WEAP.basic;p.cooldown=spec.cd;for(const off of spec.pellets){let a=p.angle+off;r.bullets.push({id:r.nextBullet++,owner:p.id,kind:p.weapon,x:p.x+p.w/2-spec.size/2,y:p.y+p.h/2-spec.size/2,w:spec.size,h:spec.size,vx:Math.cos(a)*spec.speed,vy:Math.sin(a)*spec.speed,life:spec.life,dmg:spec.dmg})}}
+function applyPower(r,p,o){if(o.kind==="heal")p.hp=Math.min(p.maxHp,p.hp+40);if(o.kind==="shield")p.shield=Math.min(75,p.shield+45);if(o.kind==="speed")p.speedBoost=240;if(o.kind==="xp")gainXp(r,p,25);r.effects.push({x:p.x+23,y:p.y+27,txt:o.txt,life:20})}
+function move(p){if(p.respawn>0){p.respawn--;if(p.respawn===0)reset(p);return}if(p.pendingUpgrade)return;p.cooldown=Math.max(0,p.cooldown-1);p.speedBoost=Math.max(0,p.speedBoost-1);let i=p.input||{},turn=.095;if(i.left)p.angle-=turn;if(i.right)p.angle+=turn;let speed=p.speedBoost>0?5.2:3.8;if(p.weapon==="sniper")speed*=.92;if(p.weapon==="shotgun")speed*=1.04;let old={x:p.x,y:p.y,w:p.w,h:p.h};if(i.up){p.x+=Math.cos(p.angle)*speed;p.y+=Math.sin(p.angle)*speed}if(i.down){p.x-=Math.cos(p.angle)*speed*.72;p.y-=Math.sin(p.angle)*speed*.72}p.x=clamp(p.x,25,W-p.w-25);p.y=clamp(p.y,25,H-p.h-25);if(WALLS.some(w=>rect(p,w))){p.x=old.x;p.y=old.y}}
+function tick(r){if(!r.started)return;for(const p of r.players){move(p);if(p.input?.shoot)shoot(r,p)}for(let i=r.bullets.length-1;i>=0;i--){let b=r.bullets[i];b.x+=b.vx;b.y+=b.vy;b.life--;if(b.life<=0||b.x<0||b.x>W||b.y<0||b.y>H||WALLS.some(w=>rect(b,w))){r.bullets.splice(i,1);continue}for(const p of r.players)if(p.id!==b.owner&&p.respawn<=0&&rect(b,p)){damage(r,p,b.dmg,b.owner);r.bullets.splice(i,1);break}}for(let pi=r.powers.length-1;pi>=0;pi--){let o=r.powers[pi];for(const p of r.players)if(p.respawn<=0&&!p.pendingUpgrade&&rect(p,o)){applyPower(r,p,o);r.powers.splice(pi,1);break}}r.powerTimer++;if(r.powerTimer>=165){r.powerTimer=0;spawnPower(r)}r.effects.forEach(e=>e.life--);r.effects=r.effects.filter(e=>e.life>0)}
+function snap(r){return{t:Date.now(),w:W,h:H,walls:WALLS,players:r.players.map(p=>({id:p.id,name:p.name,color:p.color,label:p.label,x:Math.round(p.x),y:Math.round(p.y),w:p.w,h:p.h,angle:Math.round(p.angle*100)/100,hp:Math.round(p.hp),maxHp:p.maxHp,shield:Math.round(p.shield),score:p.score,kills:p.kills,deaths:p.deaths,level:p.level,xp:p.xp,needXp:p.needXp,weapon:p.weapon,pendingUpgrade:p.pendingUpgrade,respawn:p.respawn})),bullets:r.bullets.map(b=>({id:b.id,kind:b.kind,x:Math.round(b.x),y:Math.round(b.y),w:b.w,h:b.h})),powers:r.powers.map(o=>({id:o.id,kind:o.kind,txt:o.txt,x:Math.round(o.x),y:Math.round(o.y),w:o.w,h:o.h})),effects:r.effects}}
+function loops(r){if(r.tick)clearInterval(r.tick);if(r.broadcast)clearInterval(r.broadcast);for(let i=0;i<3;i++)spawnPower(r);r.tick=setInterval(()=>tick(r),1000/30);r.broadcast=setInterval(()=>io.to(r.code).volatile.emit("state",snap(r)),1000/20)}
+io.on("connection",socket=>{socket.on("createRoom",cb=>{try{let r=makeRoom(socket);socket.join(r.code);socket.data.room=r.code;socket.data.playerId=1;cb&&cb({ok:true,room:pub(r),playerId:1});io.to(r.code).emit("lobby",pub(r))}catch(e){cb&&cb({ok:false,error:e.message})}});socket.on("joinRoom",(raw,cb)=>{try{let c=String(raw||"").trim().toUpperCase(),r=rooms.get(c);if(!r)return cb&&cb({ok:false,error:"Sala não encontrada"});if(r.players.length>=6)return cb&&cb({ok:false,error:"Sala cheia"});let id=r.players.length+1;r.players.push(mkP(socket.id,id));socket.join(c);socket.data.room=c;socket.data.playerId=id;cb&&cb({ok:true,room:pub(r),playerId:id});io.to(c).emit("lobby",pub(r))}catch(e){cb&&cb({ok:false,error:e.message})}});socket.on("rename",name=>{let r=rooms.get(socket.data.room);if(!r)return;let p=bySock(r,socket.id);if(!p)return;p.name=String(name||"").slice(0,14)||p.name;io.to(r.code).emit("lobby",pub(r))});socket.on("start",()=>{let r=rooms.get(socket.data.room);if(!r||r.hostId!==socket.id)return;r.started=true;loops(r);io.to(r.code).emit("started",snap(r))});socket.on("input",inp=>{let r=rooms.get(socket.data.room);if(!r)return;let p=bySock(r,socket.id);if(!p)return;p.input={up:!!inp?.up,down:!!inp?.down,left:!!inp?.left,right:!!inp?.right,shoot:!!inp?.shoot}});socket.on("chooseUpgrade",choice=>{let r=rooms.get(socket.data.room);if(!r)return;let p=bySock(r,socket.id);if(!p||!p.pendingUpgrade)return;if(!["shotgun","sniper","rifle"].includes(choice))return;p.weapon=choice;p.pendingUpgrade=false;p.upgrades.push(choice);r.effects.push({x:p.x+23,y:p.y+27,txt:WEAP[choice].name,life:30})});socket.on("disconnect",()=>{let r=rooms.get(socket.data.room);if(!r)return;if(r.hostId===socket.id){io.to(r.code).emit("closed");if(r.tick)clearInterval(r.tick);if(r.broadcast)clearInterval(r.broadcast);rooms.delete(r.code);return}r.players=r.players.filter(p=>p.socketId!==socket.id);io.to(r.code).emit("lobby",pub(r))})});
+setInterval(()=>{let now=Date.now();for(const [c,r] of rooms)if(now-r.created>1000*60*60*4){if(r.tick)clearInterval(r.tick);if(r.broadcast)clearInterval(r.broadcast);rooms.delete(c)}},1000*60*10);
+const PORT=process.env.PORT||3000;httpServer.listen(PORT,()=>console.log("Laser Tank Arena V1 rodando na porta "+PORT));
