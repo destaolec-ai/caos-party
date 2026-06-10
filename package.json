@@ -1,7 +1,7 @@
 {
-  "name": "laser-tank-arena-v1",
-  "version": "1.0.0",
-  "description": "Laser Tank Arena V1",
+  "name": "laser-tank-arena-v2-horizon",
+  "version": "2.0.0",
+  "description": "Laser Tank Arena V2 Horizon",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

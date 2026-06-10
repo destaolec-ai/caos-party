@@ -1,21 +1,23 @@
-# Laser Tank Arena V1
+# Laser Tank Arena V2 Horizon
 
-Shooter online simples para focar em um jogo só.
+Baseado na V1, mas agora totalmente focado em um shooter mais estável e mais bonito.
 
-## Mecânica principal
+## Novidades
 
-- Arena estilo lasertag.
-- Chão preto e paredes brancas.
-- Tanques em visão de cima.
-- Servidor controla física, tiros, dano, XP e powerups.
-
-## Evolução
-
-Quando o tanque sobe de nível, o jogador escolhe:
-
-- 💥 Shotgun: perto, espalha tiro.
-- 🎯 Sniper: longe, tiro forte e lento.
-- ⚡ Rifle: médio alcance, cadência rápida.
+- **FPS travado em 30** no cliente.
+- **Medidor de FPS** na tela.
+- **Visual novo**: sprites melhores para os tanques, esteiras, corpo, torre e canhão.
+- **Arena horizontal (16:9)**.
+- No celular, em retrato aparece aviso para virar para **horizontal**.
+- **Mais armas**:
+  - 🔫 Laser
+  - 💥 Shotgun
+  - 🎯 Sniper
+  - ⚡ Rifle
+  - 🌪️ SMG
+  - 🧨 Cannon
+- Ao evoluir, o jogador recebe **3 escolhas** aleatórias de upgrade.
+- Powerups continuam, mas o foco agora é o combate.
 
 ## Estrutura
 
@@ -27,15 +29,22 @@ public/
   index.html
 ```
 
-Render:
+## Render
+
+Build Command:
 
 ```txt
-Build Command: npm install
-Start Command: npm start
+npm install
+```
+
+Start Command:
+
+```txt
+npm start
 ```
 
 Teste com:
 
 ```txt
-https://SEU-LINK.onrender.com?v=laser1
+https://SEU-LINK.onrender.com?v=laser2
 ```
